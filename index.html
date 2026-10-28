@@ -1,0 +1,464 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WWW Clicker ⚡</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;color:#fff;text-align:center;
+ font-family:Arial,sans-serif;
+ background:radial-gradient(ellipse at top,#30266b,#0b0d20 75%);
+}
+header{padding:24px 10px 10px}
+h1{font-size:clamp(32px,7vw,54px);color:#6cf7ff;
+ text-shadow:0 0 20px #00bfff;margin:5px}
+.panel{width:min(94%,520px);margin:16px auto;padding:22px;
+ background:#171a33;border:1px solid #454b83;border-radius:22px;
+ box-shadow:0 10px 35px #0005}
+input,button{font:inherit;border:0;border-radius:10px;padding:12px}
+input{width:100%;margin:7px 0;background:#0b1026;
+ color:white;border:1px solid #555b85}
+button{cursor:pointer;font-weight:bold;transition:.15s}
+button:hover{filter:brightness(1.16);transform:translateY(-2px)}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.primary{background:linear-gradient(100deg,#00ddff,#9674ff);color:#101329}
+.danger{background:#ff687f;color:#300914}
+.green{background:#67f4c2;color:#082a23}
+.stats{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.stat{background:#262a4b;padding:12px;border-radius:12px;min-width:105px;flex:1}
+.stat strong{display:block;font-size:23px;margin-top:5px;overflow-wrap:anywhere}
+#coinArea{position:relative;display:flex;justify-content:center;align-items:center}
+#coin{
+ width:180px;height:180px;border-radius:50%;margin:25px auto;
+ font-size:30px;color:#704000;
+ background:radial-gradient(circle at 30% 25%,#fff9b1,#ffc329 48%,#ed7600);
+ border:7px solid #ffe77b;box-shadow:0 0 35px #ffb21d99;
+}
+#coin:active{transform:scale(.91)}
+.pop{animation:pop .24s ease-out}
+@keyframes pop{50%{transform:scale(1.12) rotate(4deg)}}
+.progress{height:14px;background:#080b1b;border-radius:99px;overflow:hidden;margin:10px 0}
+#xpBar{height:100%;width:0;background:linear-gradient(90deg,#00eaff,#b16cff);
+ transition:width .3s}
+.upgrade{display:flex;align-items:center;justify-content:space-between;
+ gap:10px;text-align:left;margin:10px 0;padding:13px;
+ background:#25294a;border-radius:12px}
+.upgrade button{background:#6ef3ca;color:#102c29;white-space:nowrap}
+small,.muted{color:#b8c0e0}
+#message{min-height:24px;color:#86ffe0}
+#floatLayer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.float{position:absolute;font-size:23px;font-weight:bold;color:#fff07b;
+ text-shadow:0 0 9px #ff9800;animation:floatUp .9s forwards}
+@keyframes floatUp{to{transform:translateY(-100px) scale(1.25);opacity:0}}
+#levelToast{color:#ffe77b;font-size:22px;font-weight:bold;min-height:27px}
+.admin{border-color:#ffc857;box-shadow:0 0 25px #ffbc3b22}
+.admin h2{color:#ffdc79}
+.adminGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.adminGrid input{min-width:0}
+.adminGrid button{width:100%}
+.reward{padding:10px;margin:7px 0;background:#25294a;border-radius:10px}
+.hidden{display:none!important}
+footer{padding:25px;color:#aeb4d8;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>⚡ WWW CLICKER ⚡</h1>
+<p>Click • Upgrade • Level Up • Become a Legend</p>
+</header>
+
+<section id="login" class="panel">
+<h2>🔐 WWW ACCESS</h2>
+<p>Enter your password to play.</p>
+<form id="loginForm">
+<input id="password" type="password" placeholder="Password"
+ autocomplete="off" required>
+<button class="primary" type="submit">UNLOCK GAME 🚀</button>
+</form>
+<p id="loginMessage"></p>
+<small>Player access and admin access supported.</small>
+</section>
+
+<main id="game" class="hidden">
+<section class="panel">
+<div class="stats">
+<div class="stat">🪙 Coins<strong id="coins">0</strong></div>
+<div class="stat">⚡ Per click<strong id="power">1</strong></div>
+<div class="stat">🤖 Per second<strong id="auto">0</strong></div>
+</div>
+<h2 id="levelLabel">Level 1</h2>
+<div class="progress"><div id="xpBar"></div></div>
+<p id="xpLabel" class="muted">0 / 100 XP</p>
+<div id="levelToast"></div>
+<div id="coinArea">
+<div id="floatLayer"></div>
+<button id="coin">🪙<br>CLICK!</button>
+</div>
+<p id="message">Your adventure starts now!</p>
+<p>Total clicks: <strong id="clicks">0</strong></p>
+</section>
+
+<section class="panel">
+<h2>🛒 Upgrade Shop</h2>
+<div class="upgrade">
+<div>💪 <b>Power Click</b><br><small id="powerInfo">+1 power</small></div>
+<button id="powerBuy">Buy 25</button>
+</div>
+<div class="upgrade">
+<div>🤖 <b>Auto Clicker</b><br><small id="autoInfo">Earn coins each second</small></div>
+<button id="autoBuy">Buy 100</button>
+</div>
+<div class="upgrade">
+<div>🚀 <b>Super Click</b><br><small>Triple your click power</small></div>
+<button id="superBuy">Buy 500</button>
+</div>
+</section>
+
+<section class="panel">
+<h2>🏆 Rewards</h2>
+<div id="rewards"></div>
+</section>
+
+<section class="panel">
+<h2>💾 Save Game</h2>
+<button id="saveButton" class="primary">Save Progress</button>
+<button id="loadButton" class="green">Load Progress</button>
+<p id="saveMessage" class="muted"></p>
+<button id="resetButton" class="danger">Reset Game</button>
+</section>
+
+<section id="adminPanel" class="panel admin hidden">
+<h2>🛡️ ADMIN CONTROL CENTER</h2>
+<p>Admin access enabled</p>
+<div class="adminGrid">
+<input id="giveCoins" type="number" min="0" placeholder="Coins to give">
+<button id="giveCoinsBtn" class="green">Give Coins 🪙</button>
+<input id="setLevel" type="number" min="1" max="100000" placeholder="Set level">
+<button id="setLevelBtn">Set Level 🏆</button>
+<input id="setXP" type="number" min="0" max="100000000" placeholder="Set current XP">
+<button id="setXPBtn">Set XP ✨</button>
+<input id="addAuto" type="number" min="0" max="100000" placeholder="Auto-clickers to add">
+<button id="addAutoBtn">Add Auto 🤖</button>
+<input id="setPower" type="number" min="1" max="100000000" placeholder="Set click power">
+<button id="setPowerBtn">Set Power ⚡</button>
+</div>
+<h3>🎁 Reward controls</h3>
+<div id="adminRewards"></div>
+<p id="adminMessage"></p>
+</section>
+</main>
+
+<footer>WWW CLICKER · GitHub Pages Edition</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const PLAYER_PASSWORD = "cik";
+const ADMIN_PASSWORD = "Admin";
+
+const initialState = () => ({
+ coins:0, power:1, auto:0, clicks:0, level:1, xp:0,
+ powerCost:25, autoCost:100, superCost:500,
+ multiplier:1, totalEarned:0, rewards:[]
+});
+
+let s = initialState();
+let loggedIn = false;
+let isAdmin = false;
+let toastTimer;
+
+function xpNeeded(level){
+ return 100 + (level - 1) * 50;
+}
+
+function addXP(amount){
+ s.xp += amount;
+ while(s.xp >= xpNeeded(s.level) && s.level < 100000){
+  s.xp -= xpNeeded(s.level);
+  s.level++;
+  $("levelToast").textContent = "🎉 LEVEL UP! LEVEL " + s.level + "!";
+  $("message").textContent = "New level unlocked! Keep clicking!";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>$("levelToast").textContent="",2500);
+  if(s.level === 2) unlockReward("glow");
+  if(s.level === 3) unlockReward("double");
+  if(s.level === 5) unlockReward("fire");
+  if(s.level === 10) unlockReward("legend");
+ }
+}
+
+function earn(amount, awardXP=true){
+ if(!Number.isFinite(amount) || amount <= 0) return;
+ s.coins += amount;
+ s.totalEarned += amount;
+ if(awardXP) addXP(Math.max(1,Math.floor(amount)));
+ render();
+}
+
+function unlockReward(id){
+ if(!s.rewards.includes(id)) s.rewards.push(id);
+}
+
+const rewardList = [
+ {id:"glow", level:2, name:"✨ Glowing Coin"},
+ {id:"double", level:3, name:"⚡ Double Click"},
+ {id:"fire", level:5, name:"🔥 Fire Coin"},
+ {id:"legend", level:10, name:"👑 Legendary Coin"}
+];
+
+function claimReward(id){
+ const reward = rewardList.find(r=>r.id===id);
+ if(!reward || s.rewards.includes(id)) return;
+ unlockReward(id);
+ if(id==="double") s.multiplier=Math.max(s.multiplier,2);
+ if(id==="fire") s.multiplier=Math.max(s.multiplier,3);
+ if(id==="legend") s.multiplier=Math.max(s.multiplier,5);
+ $("message").textContent=reward.name+" unlocked!";
+ render();
+}
+
+function renderRewards(){
+ $("rewards").innerHTML="";
+ $("adminRewards").innerHTML="";
+ for(const r of rewardList){
+  const unlocked=s.rewards.includes(r.id);
+  const available=s.level>=r.level;
+  const div=document.createElement("div");
+  div.className="reward";
+  const text=document.createElement("span");
+  text.textContent=r.name+" — Level "+r.level+" ";
+  div.appendChild(text);
+  if(unlocked){
+   const done=document.createElement("b");
+   done.textContent="✅ Unlocked";
+   div.appendChild(done);
+  }else if(available){
+   const btn=document.createElement("button");
+   btn.className="green";
+   btn.textContent="Claim reward";
+   btn.onclick=()=>claimReward(r.id);
+   div.appendChild(btn);
+  }else{
+   const locked=document.createElement("small");
+   locked.textContent="🔒 Locked";
+   div.appendChild(locked);
+  }
+  $("rewards").appendChild(div);
+
+  const adminDiv=document.createElement("div");
+  adminDiv.className="reward";
+  const adminText=document.createElement("span");
+  adminText.textContent=r.name+" ";
+  adminDiv.appendChild(adminText);
+  const adminBtn=document.createElement("button");
+  adminBtn.className="green";
+  adminBtn.textContent=unlocked?"Unlocked":"Unlock";
+  adminBtn.disabled=unlocked;
+  adminBtn.onclick=()=>{unlockReward(r.id);
+   if(r.id==="double")s.multiplier=Math.max(s.multiplier,2);
+   if(r.id==="fire")s.multiplier=Math.max(s.multiplier,3);
+   if(r.id==="legend")s.multiplier=Math.max(s.multiplier,5);
+   render();adminMsg("Reward unlocked!");};
+  adminDiv.appendChild(adminBtn);
+  $("adminRewards").appendChild(adminDiv);
+ }
+}
+
+function render(){
+ $("coins").textContent=Math.floor(s.coins).toLocaleString();
+ $("power").textContent=s.power.toLocaleString();
+ $("auto").textContent=s.auto.toLocaleString();
+ $("clicks").textContent=s.clicks.toLocaleString();
+ $("levelLabel").textContent="🏆 Level "+s.level;
+ $("xpLabel").textContent=Math.floor(s.xp)+" / "+xpNeeded(s.level)+" XP";
+ $("xpBar").style.width=Math.min(100,s.xp/xpNeeded(s.level)*100)+"%";
+ $("powerBuy").textContent="Buy "+s.powerCost.toLocaleString();
+ $("autoBuy").textContent="Buy "+s.autoCost.toLocaleString();
+ $("superBuy").textContent="Buy "+s.superCost.toLocaleString();
+ $("powerInfo").textContent="Increase power by 1";
+ $("autoInfo").textContent="Earn "+s.auto+" coins every second";
+ $("powerBuy").disabled=s.coins<s.powerCost;
+ $("autoBuy").disabled=s.coins<s.autoCost;
+ $("superBuy").disabled=s.coins<s.superCost;
+ $("coin").style.filter=s.rewards.includes("fire")
+  ?"drop-shadow(0 0 18px #ff542b)"
+  :s.rewards.includes("glow")?"drop-shadow(0 0 18px #00eaff)":"none";
+ $("coin").style.borderColor=s.rewards.includes("legend")?"#d8a4ff":"#ffe77b";
+ renderRewards();
+}
+
+function popCoin(amount){
+ const el=document.createElement("div");
+ el.className="float";
+ el.textContent="+"+Math.floor(amount)+" 🪙";
+ el.style.left=(20+Math.random()*55)+"%";
+ el.style.top=(25+Math.random()*45)+"%";
+ $("floatLayer").appendChild(el);
+ setTimeout(()=>el.remove(),950);
+ $("coin").classList.remove("pop");
+ void $("coin").offsetWidth;
+ $("coin").classList.add("pop");
+}
+
+function saveGame(){
+ try{
+  localStorage.setItem("wwwClickerSave",JSON.stringify(s));
+  $("saveMessage").textContent="✅ Progress saved on this browser!";
+ }catch(e){
+  $("saveMessage").textContent="Couldn't save. Check browser storage settings.";
+ }
+}
+
+function loadGame(){
+ try{
+  const raw=localStorage.getItem("wwwClickerSave");
+  if(!raw)return false;
+  const d=JSON.parse(raw);
+  const defaults=initialState();
+  for(const key of Object.keys(defaults)){
+   if(key==="rewards"){
+    if(Array.isArray(d.rewards))
+     s.rewards=d.rewards.filter(id=>rewardList.some(r=>r.id===id));
+   }else if(typeof d[key]==="number" && Number.isFinite(d[key]) && d[key]>=0){
+    s[key]=d[key];
+   }
+  }
+  s.level=Math.max(1,Math.min(100000,Math.floor(s.level)));
+  s.power=Math.max(1,s.power);
+  s.multiplier=Math.max(1,s.multiplier);
+  render();
+  return true;
+ }catch(e){
+  $("saveMessage").textContent="Save data could not be loaded.";
+  return false;
+ }
+}
+
+function adminMsg(msg){$("adminMessage").textContent=msg;}
+
+$("loginForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ const p=$("password").value;
+ if(p!==PLAYER_PASSWORD && p!==ADMIN_PASSWORD){
+  $("loginMessage").textContent="❌ Incorrect password. Try again.";
+  $("password").value="";
+  return;
+ }
+ loggedIn=true;
+ isAdmin=p===ADMIN_PASSWORD;
+ $("login").classList.add("hidden");
+ $("game").classList.remove("hidden");
+ $("adminPanel").classList.toggle("hidden",!isAdmin);
+ if(loadGame()){
+  $("saveMessage").textContent="✅ Saved progress loaded!";
+ }
+ $("message").textContent=isAdmin?"Welcome, Admin!":"Welcome to WWW Clicker!";
+ render();
+});
+
+$("coin").addEventListener("click",()=>{
+ if(!loggedIn)return;
+ const amount=s.power*s.multiplier;
+ s.clicks++;
+ earn(amount);
+ popCoin(amount);
+ $("message").textContent="+"+amount+" coins! Great clicking!";
+});
+
+$("powerBuy").addEventListener("click",()=>{
+ if(s.coins<s.powerCost)return;
+ s.coins-=s.powerCost;
+ s.power++;
+ s.powerCost=Math.ceil(s.powerCost*1.65);
+ render();
+});
+
+$("autoBuy").addEventListener("click",()=>{
+ if(s.coins<s.autoCost)return;
+ s.coins-=s.autoCost;
+ s.auto++;
+ s.autoCost=Math.ceil(s.autoCost*1.8);
+ render();
+});
+
+$("superBuy").addEventListener("click",()=>{
+ if(s.coins<s.superCost)return;
+ s.coins-=s.superCost;
+ s.multiplier*=3;
+ s.superCost=Math.ceil(s.superCost*3);
+ $("message").textContent="🚀 SUPER CLICK ACTIVATED!";
+ render();
+});
+
+$("saveButton").addEventListener("click",saveGame);
+$("loadButton").addEventListener("click",()=>{
+ if(loadGame())$("saveMessage").textContent="✅ Progress loaded!";
+ else $("saveMessage").textContent="No saved game found yet.";
+});
+
+$("resetButton").addEventListener("click",()=>{
+ if(!confirm("Reset all coins, levels and upgrades?"))return;
+ s=initialState();
+ localStorage.removeItem("wwwClickerSave");
+ render();
+ $("message").textContent="Fresh start! Let's go!";
+ $("saveMessage").textContent="Game reset.";
+});
+
+$("giveCoinsBtn").addEventListener("click",()=>{
+ const n=Number($("giveCoins").value);
+ if(!Number.isSafeInteger(n)||n<0)return adminMsg("Enter a valid non-negative coin amount.");
+ s.coins+=n;s.totalEarned+=n;render();adminMsg("Added "+n+" coins!");
+});
+
+$("setLevelBtn").addEventListener("click",()=>{
+ const n=Number($("setLevel").value);
+ if(!Number.isInteger(n)||n<1||n>100000)return adminMsg("Level must be between 1 and 100000.");
+ s.level=n;s.xp=0;render();adminMsg("Level set to "+n+".");
+});
+
+$("setXPBtn").addEventListener("click",()=>{
+ const n=Number($("setXP").value);
+ if(!Number.isSafeInteger(n)||n<0)return adminMsg("Enter a valid XP amount.");
+ s.xp=n;
+ while(s.xp>=xpNeeded(s.level)&&s.level<100000){
+  s.xp-=xpNeeded(s.level);s.level++;
+ }
+ render();adminMsg("XP updated!");
+});
+
+$("addAutoBtn").addEventListener("click",()=>{
+ const n=Number($("addAuto").value);
+ if(!Number.isSafeInteger(n)||n<0)return adminMsg("Enter a valid auto-clicker amount.");
+ s.auto+=n;render();adminMsg("Added "+n+" auto-clickers!");
+});
+
+$("setPowerBtn").addEventListener("click",()=>{
+ const n=Number($("setPower").value);
+ if(!Number.isSafeInteger(n)||n<1||n>100000000)
+  return adminMsg("Power must be between 1 and 100000000.");
+ s.power=n;render();adminMsg("Click power set to "+n+"!");
+});
+
+setInterval(()=>{
+ if(loggedIn && s.auto>0){
+  const amount=s.auto;
+  s.coins+=amount;
+  s.totalEarned+=amount;
+  addXP(amount);
+  render();
+ }
+},1000);
+
+window.addEventListener("beforeunload",()=>{
+ if(loggedIn){
+  try{localStorage.setItem("wwwClickerSave",JSON.stringify(s));}catch(e){}
+ }
+});
+</script>
+</body>
+</html>
